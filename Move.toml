@@ -1,0 +1,12 @@
+[package]
+name = "kata"
+edition = "2024"
+
+[dependencies]
+
+[addresses]
+kata = "0x0"
+
+[dev-dependencies]
+
+[dev-addresses]
