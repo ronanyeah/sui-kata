@@ -2,23 +2,25 @@ module kata::game_of_life;
 
 use std::string::{Self, String};
 
-const ALIVE: u8 = 1;
-const DEAD: u8 = 0;
+public enum CellState has copy, drop, store {
+    Dead,
+    Alive,
+}
 
 public struct GameOfLife has copy, drop, store {
     width: u64,
     height: u64,
-    cells: vector<vector<u8>>,
+    cells: vector<vector<CellState>>,
 }
 
 public fun new(width: u64, height: u64): GameOfLife {
-    let mut cells = vector::empty<vector<u8>>();
+    let mut cells = vector::empty<vector<CellState>>();
     let mut i = 0;
     while (i < height) {
-        let mut row = vector::empty<u8>();
+        let mut row = vector::empty<CellState>();
         let mut j = 0;
         while (j < width) {
-            vector::push_back(&mut row, DEAD);
+            vector::push_back(&mut row, CellState::Dead);
             j = j + 1;
         };
         vector::push_back(&mut cells, row);
@@ -30,7 +32,7 @@ public fun new(width: u64, height: u64): GameOfLife {
 public fun set_cell(game: &mut GameOfLife, row: u64, col: u64, alive: bool) {
     if (row < game.height && col < game.width) {
         let row_ref = vector::borrow_mut(&mut game.cells, row);
-        let cell_value = if (alive) ALIVE else DEAD;
+        let cell_value = if (alive) CellState::Alive else CellState::Dead;
         *vector::borrow_mut(row_ref, col) = cell_value;
     }
 }
@@ -38,7 +40,10 @@ public fun set_cell(game: &mut GameOfLife, row: u64, col: u64, alive: bool) {
 public fun get_cell(game: &GameOfLife, row: u64, col: u64): bool {
     if (row < game.height && col < game.width) {
         let row_ref = vector::borrow(&game.cells, row);
-        *vector::borrow(row_ref, col) == ALIVE
+        match (*vector::borrow(row_ref, col)) {
+            CellState::Alive => true,
+            CellState::Dead => false,
+        }
     } else {
         false
     }
