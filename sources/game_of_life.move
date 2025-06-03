@@ -1,6 +1,6 @@
 module kata::game_of_life;
 
-use std::{string::{Self as string, String}, vector};
+use std::string::{Self, String};
 
 const ALIVE: u8 = 1;
 const DEAD: u8 = 0;
