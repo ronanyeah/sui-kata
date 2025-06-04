@@ -108,9 +108,12 @@ public fun height(game: &GameOfLife): u64 {
 
 #[test_only]
 public fun next_generation(game: &mut GameOfLife) {
+    let mut next_cells = vector::empty<vector<CellState>>();
     let mut i = 0;
 
+    // Calculate the next state
     while (i < game.height) {
+        let mut row = vector::empty<CellState>();
         let mut j = 0;
         while (j < game.width) {
             let neighbors = count_neighbors(game, i, j);
@@ -122,14 +125,19 @@ public fun next_generation(game: &mut GameOfLife) {
                 neighbors == 3
             };
 
-            set_cell(game, i, j, next_alive);
+            let cell_state = if (next_alive) CellState::Alive else CellState::Dead;
+            vector::push_back(&mut row, cell_state);
             j = j + 1;
         };
+        vector::push_back(&mut next_cells, row);
         i = i + 1;
     };
+
+    // Apply the next state
+    game.cells = next_cells;
 }
 
 #[test_only]
-fun set_cell_for_testing(game: &mut GameOfLife, row: u64, col: u64, alive: bool) {
+public fun set_cell_for_testing(game: &mut GameOfLife, row: u64, col: u64, alive: bool) {
     set_cell(game, row, col, alive)
 }
