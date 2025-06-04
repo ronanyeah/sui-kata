@@ -32,14 +32,6 @@ public fun new(width: u64, height: u64, ctx: &mut TxContext) {
     transfer::share_object(obj);
 }
 
-fun set_cell(game: &mut GameOfLife, row: u64, col: u64, alive: bool) {
-    if (row < game.height && col < game.width) {
-        let row_ref = vector::borrow_mut(&mut game.cells, row);
-        let cell_value = if (alive) CellState::Alive else CellState::Dead;
-        *vector::borrow_mut(row_ref, col) = cell_value;
-    }
-}
-
 public fun get_cell(game: &GameOfLife, row: u64, col: u64): bool {
     if (row < game.height && col < game.width) {
         let row_ref = vector::borrow(&game.cells, row);
@@ -50,26 +42,6 @@ public fun get_cell(game: &GameOfLife, row: u64, col: u64): bool {
     } else {
         false
     }
-}
-
-fun count_neighbors(game: &GameOfLife, row: u64, col: u64): u8 {
-    let mut count = 0;
-    let mut i = if (row == 0) 0 else row - 1;
-    let max_i = if (row + 1 >= game.height) game.height - 1 else row + 1;
-
-    while (i <= max_i) {
-        let mut j = if (col == 0) 0 else col - 1;
-        let max_j = if (col + 1 >= game.width) game.width - 1 else col + 1;
-
-        while (j <= max_j) {
-            if (!(i == row && j == col) && get_cell(game, i, j)) {
-                count = count + 1;
-            };
-            j = j + 1;
-        };
-        i = i + 1;
-    };
-    count
 }
 
 public fun to_ascii_string(game: &GameOfLife): String {
@@ -138,6 +110,31 @@ public fun next_generation(game: &mut GameOfLife) {
 }
 
 #[test_only]
+fun count_neighbors(game: &GameOfLife, row: u64, col: u64): u8 {
+    let mut count = 0;
+    let mut i = if (row == 0) 0 else row - 1;
+    let max_i = if (row + 1 >= game.height) game.height - 1 else row + 1;
+
+    while (i <= max_i) {
+        let mut j = if (col == 0) 0 else col - 1;
+        let max_j = if (col + 1 >= game.width) game.width - 1 else col + 1;
+
+        while (j <= max_j) {
+            if (!(i == row && j == col) && get_cell(game, i, j)) {
+                count = count + 1;
+            };
+            j = j + 1;
+        };
+        i = i + 1;
+    };
+    count
+}
+
+#[test_only]
 public fun set_cell_for_testing(game: &mut GameOfLife, row: u64, col: u64, alive: bool) {
-    set_cell(game, row, col, alive)
+    if (row < game.height && col < game.width) {
+        let row_ref = vector::borrow_mut(&mut game.cells, row);
+        let cell_value = if (alive) CellState::Alive else CellState::Dead;
+        *vector::borrow_mut(row_ref, col) = cell_value;
+    }
 }
