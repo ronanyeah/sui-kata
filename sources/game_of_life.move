@@ -7,13 +7,15 @@ public enum CellState has copy, drop, store {
     Alive,
 }
 
-public struct GameOfLife has copy, drop, store {
+public struct GameOfLife has key {
+    id: UID,
     width: u64,
     height: u64,
     cells: vector<vector<CellState>>,
 }
 
-public fun new(width: u64, height: u64): GameOfLife {
+public fun new(width: u64, height: u64, ctx: &mut TxContext) {
+    let id = object::new(ctx);
     let mut cells = vector::empty<vector<CellState>>();
     let mut i = 0;
     while (i < height) {
@@ -26,10 +28,11 @@ public fun new(width: u64, height: u64): GameOfLife {
         vector::push_back(&mut cells, row);
         i = i + 1;
     };
-    GameOfLife { width, height, cells }
+    let obj = GameOfLife { id, width, height, cells };
+    transfer::share_object(obj);
 }
 
-public fun set_cell(game: &mut GameOfLife, row: u64, col: u64, alive: bool) {
+fun set_cell(game: &mut GameOfLife, row: u64, col: u64, alive: bool) {
     if (row < game.height && col < game.width) {
         let row_ref = vector::borrow_mut(&mut game.cells, row);
         let cell_value = if (alive) CellState::Alive else CellState::Dead;
@@ -69,31 +72,6 @@ fun count_neighbors(game: &GameOfLife, row: u64, col: u64): u8 {
     count
 }
 
-public fun next_generation(game: &GameOfLife): GameOfLife {
-    let mut new_game = new(game.width, game.height);
-    let mut i = 0;
-
-    while (i < game.height) {
-        let mut j = 0;
-        while (j < game.width) {
-            let neighbors = count_neighbors(game, i, j);
-            let current_alive = get_cell(game, i, j);
-
-            let next_alive = if (current_alive) {
-                neighbors == 2 || neighbors == 3
-            } else {
-                neighbors == 3
-            };
-
-            set_cell(&mut new_game, i, j, next_alive);
-            j = j + 1;
-        };
-        i = i + 1;
-    };
-
-    new_game
-}
-
 public fun to_ascii_string(game: &GameOfLife): String {
     let mut result = string::utf8(b"");
     let mut i = 0;
@@ -124,4 +102,34 @@ public fun width(game: &GameOfLife): u64 {
 
 public fun height(game: &GameOfLife): u64 {
     game.height
+}
+
+//// TESTING
+
+#[test_only]
+public fun next_generation(game: &mut GameOfLife) {
+    let mut i = 0;
+
+    while (i < game.height) {
+        let mut j = 0;
+        while (j < game.width) {
+            let neighbors = count_neighbors(game, i, j);
+            let current_alive = get_cell(game, i, j);
+
+            let next_alive = if (current_alive) {
+                neighbors == 2 || neighbors == 3
+            } else {
+                neighbors == 3
+            };
+
+            set_cell(game, i, j, next_alive);
+            j = j + 1;
+        };
+        i = i + 1;
+    };
+}
+
+#[test_only]
+fun set_cell_for_testing(game: &mut GameOfLife, row: u64, col: u64, alive: bool) {
+    set_cell(game, row, col, alive)
 }
